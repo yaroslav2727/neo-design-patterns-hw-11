@@ -22,14 +22,22 @@ export class ProcessingMediator {
   }
 
   onSuccess(record: DataRecord) {
-    // TODO
+    const writer = this.writerMap[record.type];
+    if (writer) {
+      writer.write(record);
+    }
   }
 
   onRejected(original: DataRecord, error: string) {
-    // TODO
+    this.rejectedWriter.write(original, error);
   }
 
   async finalize() {
-    // TODO
+    await Promise.all([
+      this.writerMap.access_log.finalize(),
+      this.writerMap.transaction.finalize(),
+      this.writerMap.system_error.finalize(),
+      this.rejectedWriter.finalize(),
+    ]);
   }
 }

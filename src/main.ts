@@ -16,12 +16,57 @@ const handlerMap = {
 };
 
 async function main() {
-  // зчитування даних
-  // створення mediator
-  // цикл по records:
-  //   - вибір handler-а через handlerMap
-  //   - try/catch: handle + mediator.onSuccess/onRejected
-  // finalize
+  try {
+    // зчитування даних
+    const data = await fs.readFile("src/data/records.json", "utf-8");
+    const records: DataRecord[] = JSON.parse(data);
+
+    console.log(`[INFO] Завантажено записів: ${records.length}`);
+
+    // створення mediator
+    const mediator = new ProcessingMediator(
+      new AccessLogWriter(),
+      new TransactionWriter(),
+      new ErrorLogWriter(),
+      new RejectedWriter()
+    );
+
+    let successCount = 0;
+    let rejectedCount = 0;
+
+    // цикл по records:
+    for (const record of records) {
+      try {
+        // вибір handler-а через handlerMap
+        const buildHandler = handlerMap[record.type];
+        if (!buildHandler) {
+          throw new Error(`Unknown record type: ${record.type}`);
+        }
+
+        const handler = buildHandler();
+        const processedRecord = handler.handle(record);
+
+        // успішна обробка
+        mediator.onSuccess(processedRecord);
+        successCount++;
+      } catch (error) {
+        // помилка обробки
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        mediator.onRejected(record, errorMessage);
+        rejectedCount++;
+      }
+    }
+
+    // finalize
+    await mediator.finalize();
+
+    console.log(`[INFO] Успішно оброблено: ${successCount}`);
+    console.log(`[WARN] Відхилено з помилками: ${rejectedCount}`);
+    console.log(`[INFO] Звіт збережено у директорії output/`);
+  } catch (error) {
+    console.error(`[ERROR] ${error}`);
+  }
 }
 
 main();

@@ -3,6 +3,10 @@ import { AccessLogRecord } from "../../models/DataRecord";
 
 export class UserIdValidator extends AbstractHandler {
   protected process(record: AccessLogRecord): AccessLogRecord {
-    // TODO
+    if (!record.userId || record.userId.trim() === "") {
+      throw new Error("Invalid userId");
+    }
+
+    return record;
   }
 }

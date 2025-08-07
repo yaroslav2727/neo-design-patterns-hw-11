@@ -6,6 +6,10 @@ const ipv4Regex =
 
 export class IpValidator extends AbstractHandler {
   protected process(record: AccessLogRecord): AccessLogRecord {
-    // TODO
+    if (!record.ip || !ipv4Regex.test(record.ip)) {
+      throw new Error("Invalid IP address");
+    }
+
+    return record;
   }
 }

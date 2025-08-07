@@ -4,5 +4,9 @@ import { CurrencyNormalizer } from "../handlers/CurrencyNormalizer";
 import { AbstractHandler } from "../AbstractHandler";
 
 export function buildTransactionChain(): AbstractHandler {
-  // TODO
+  const ts = new TimestampParser();
+  const amount = new AmountParser();
+  const currency = new CurrencyNormalizer();
+  ts.setNext(amount).setNext(currency);
+  return ts;
 }
